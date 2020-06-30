@@ -5,10 +5,7 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
-import java.io.IOException
 import java.security.*
-import java.security.cert.CertificateException
-import java.security.spec.InvalidKeySpecException
 import java.security.spec.MGF1ParameterSpec
 import java.security.spec.X509EncodedKeySpec
 import javax.crypto.Cipher
@@ -19,28 +16,19 @@ class KeyStoreHelper private constructor() {
     private val newCipherInstance: Cipher?
         get() = try {
             Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding")
-        } catch (e: Exception) {
+        } catch (e: Exception) { //Bad example using general exception
             e.printStackTrace()
             null
         }
 
     private fun loadKeyStore(): KeyStore? {
-        try {
+        return try {
             val keyStore = KeyStore.getInstance(AUTHENTICATION_KEYSTORE_NAME)
             keyStore.load(null)
-            return keyStore
-        }
-        catch (e: Exception) {
-            return when(e){
-                is KeyStoreException, is NoSuchAlgorithmException,
-                is CertificateException, is IOException -> {
-                    e.printStackTrace()
-                    null
-                }
-                else -> {
-                    null
-                }
-            }
+            keyStore
+        } catch (e: Exception) { //Bad example using general exception
+            e.printStackTrace()
+            null
         }
     }
 
@@ -88,13 +76,7 @@ class KeyStoreHelper private constructor() {
         try {
             val key: PrivateKey = keyStore!!.getKey(alias, null) as PrivateKey
             cipher!!.init(Cipher.DECRYPT_MODE, key)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } catch (e: NoSuchAlgorithmException) {
-            e.printStackTrace()
-        } catch (e: UnrecoverableKeyException) {
-            e.printStackTrace()
-        } catch (e: InvalidKeyException) {
+        } catch (e: Exception) { //Bad example using general exception
             e.printStackTrace()
         }
     }
@@ -108,15 +90,7 @@ class KeyStoreHelper private constructor() {
             val spec = OAEPParameterSpec("SHA-256", "MGF1",
                     MGF1ParameterSpec.SHA1, PSource.PSpecified.DEFAULT)
             cipher!!.init(Cipher.ENCRYPT_MODE, unrestricted, spec)
-        } catch (e: KeyStoreException) {
-            e.printStackTrace()
-        } catch (e: InvalidKeySpecException) {
-            e.printStackTrace()
-        } catch (e: NoSuchAlgorithmException) {
-            e.printStackTrace()
-        } catch (e: InvalidKeyException) {
-            e.printStackTrace()
-        } catch (e: InvalidAlgorithmParameterException) {
+        } catch (e: Exception) {
             e.printStackTrace()
         }
     }
@@ -135,7 +109,7 @@ class KeyStoreHelper private constructor() {
         return try {
             val bytes: ByteArray = Base64.decode(encodedString, Base64.NO_WRAP)
             String(cipher.doFinal(bytes))
-        } catch (e: Exception) {
+        } catch (e: Exception) { //Bad example using general exception
             e.printStackTrace()
             null
         }
