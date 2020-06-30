@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">BiometricAndroid</string>
+    <string name="load_password">Load Password</string>
+    <string name="save_password">Save Password</string>
+    <string name="password_hint">Password</string>
+    <string name="test_biometric">Test Biometric</string>
 </resources>
