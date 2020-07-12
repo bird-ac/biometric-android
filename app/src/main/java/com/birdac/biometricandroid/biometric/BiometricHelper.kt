@@ -23,14 +23,9 @@ class BiometricHelper( private val context: Context,
     private val biometricKeyStoreValue = "KEY_AUTH_VALUE"
     private var biometricPrompt:BiometricPrompt? = null
 
-    private fun getCryptoObject(cipher: Cipher): BiometricPrompt.CryptoObject{
-        return BiometricPrompt.CryptoObject(cipher);
-    }
-
     private fun getEncryptedValue(): String? {
         return context.getSharedPreferences("BIOMETRIC", Context.MODE_PRIVATE)
             .getString(biometricKeyStoreValue, null)
-
     }
 
     private fun storeEncryptedValue(authValue: String) {
@@ -47,15 +42,12 @@ class BiometricHelper( private val context: Context,
         return biometricStatus == BiometricManager.BIOMETRIC_SUCCESS
     }
 
-    private fun cancelBiometricAuthenticationSequence() {
-        biometricPrompt?.cancelAuthentication()
-    }
-
     fun isFingerprintDecodeAuthAvailable(): Boolean{
         return isFingeprintAuthAvailable() &&
                 KeyStoreHelper.getInstance().isKeystoreContainAlias(biometricKeyStoreAlias) ?: false &&
                 getEncryptedValue() != null
     }
+
 
     fun saveAuthenticationValue(authValue: String){
         KeyStoreHelper.getInstance().deleteKey(biometricKeyStoreAlias)
@@ -70,6 +62,10 @@ class BiometricHelper( private val context: Context,
                 callback.biometricAuthenticationError("Cipher is null")
             }
         }
+    }
+
+    private fun getCryptoObject(cipher: Cipher): BiometricPrompt.CryptoObject{
+        return BiometricPrompt.CryptoObject(cipher);
     }
 
     fun startAuthenticationForDecode(){
@@ -117,6 +113,10 @@ class BiometricHelper( private val context: Context,
         } else {
             callback.biometricAuthenticationError("Cipher is null")
         }
+    }
+
+    private fun cancelBiometricAuthenticationSequence() {
+        biometricPrompt?.cancelAuthentication()
     }
 
     fun onStop(){

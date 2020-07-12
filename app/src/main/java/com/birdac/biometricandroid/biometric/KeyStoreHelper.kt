@@ -47,22 +47,6 @@ class KeyStoreHelper private constructor() {
         keyGenerator.generateKeyPair()
     }
 
-    fun getEncodeCipher(alias: String): Cipher? {
-        val cipher = newCipherInstance
-        val keyStore = loadKeyStore()!!
-        generateKeyIfNotExist(keyStore, alias)
-        initEncodeCipher(cipher, alias, keyStore)
-        return cipher
-    }
-
-    fun getDecodeCipher(alias: String, withCipher: Cipher? = null): Cipher? {
-        val cipher: Cipher? = withCipher ?: newCipherInstance
-        val keyStore = loadKeyStore()!!
-        generateKeyIfNotExist(keyStore, alias)
-        initDecodeCipher(cipher, alias, keyStore)
-        return cipher
-    }
-
     private fun generateKeyIfNotExist(keyStore: KeyStore, alias: String) {
         try {
             if(!keyStore.containsAlias(alias))
@@ -72,17 +56,47 @@ class KeyStoreHelper private constructor() {
         }
     }
 
-    private fun initDecodeCipher(cipher: Cipher?, alias: String, keyStore: KeyStore) {
-        try {
-            val key: PrivateKey = keyStore!!.getKey(alias, null) as PrivateKey
-            cipher!!.init(Cipher.DECRYPT_MODE, key)
-        } catch (e: Exception) { //Bad example using general exception
-            e.printStackTrace()
+    fun getEncodeCipher(alias: String): Cipher? {
+        val cipher = newCipherInstance
+        val keyStore = loadKeyStore() ?: return null
+
+        if(!keyStore.containsAlias(alias))
+            generateKeyIfNotExist(keyStore, alias)
+
+        return if(initEncodeCipher(cipher, alias, keyStore)) {
+            cipher
+        } else {
+            null
         }
     }
 
-    private fun initEncodeCipher(cipher: Cipher?, alias: String, keyStore: KeyStore) {
-        try {
+    fun getDecodeCipher(alias: String, withCipher: Cipher? = null): Cipher? {
+        val cipher: Cipher? = withCipher ?: newCipherInstance
+        val keyStore = loadKeyStore() ?: return null
+
+        if(!keyStore.containsAlias(alias))
+            generateKeyIfNotExist(keyStore, alias)
+
+        return if(initDecodeCipher(cipher, alias, keyStore)) {
+            cipher
+        } else {
+            null
+        }
+    }
+
+    private fun initDecodeCipher(cipher: Cipher?, alias: String, keyStore: KeyStore): Boolean {
+        return try {
+            val key: PrivateKey = keyStore.getKey(alias, null) as PrivateKey
+            cipher!!.init(Cipher.DECRYPT_MODE, key)
+            true
+        } catch (e: Exception) { //Bad example using general exception
+            e.printStackTrace()
+            false
+        }
+    }
+
+    private fun initEncodeCipher(cipher: Cipher?, alias: String, keyStore: KeyStore): Boolean {
+        return try {
             val key = keyStore.getCertificate(alias).publicKey
 //            https://developer.android.com/reference/android/security/keystore/KeyGenParameterSpec.html#known-issues
             val unrestricted = KeyFactory.getInstance(key.algorithm).generatePublic(
@@ -90,8 +104,10 @@ class KeyStoreHelper private constructor() {
             val spec = OAEPParameterSpec("SHA-256", "MGF1",
                     MGF1ParameterSpec.SHA1, PSource.PSpecified.DEFAULT)
             cipher!!.init(Cipher.ENCRYPT_MODE, unrestricted, spec)
+            true
         } catch (e: Exception) {
             e.printStackTrace()
+            false
         }
     }
 
